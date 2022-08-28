@@ -74,6 +74,7 @@ export req=(
     "cut"
     "grep"
     "head"
+    "touch"
 )
 
 for chk in ${req[@]} ; do
@@ -82,6 +83,10 @@ for chk in ${req[@]} ; do
         export status="false"
     fi
 done
+
+if [[ "${status}" = "false" ]] ; then
+    exit 1
+fi
 
 # Fonksiyonların Tanımlanması
 
@@ -162,7 +167,11 @@ case "${DO}" in
                             [eE][vV][eE][tT]|[eE]|[yY])
                                 for i in ${LOGFILES[@]} ; do 
                                     if [[ -f "${i}" ]] ; then
-                                        rm -rf "${i}"
+                                        rm -rf "${i}" && {
+                                            echo "${i} kaldırıldı."
+                                        } || {
+                                            echo "${i} kaldırılamadı"
+                                        }
                                     fi
                                 done
                             ;;
@@ -174,7 +183,7 @@ case "${DO}" in
                 ;;
                 hist)
                     if [[ -d "${HOME}" ]] ; then
-                        if tohuch -c "${HOME}" &> /dev/null ; then
+                        if touch -c "${HOME}" &> /dev/null ; then
                             if [[ "${banner}" = "yes" ]] ; then
                                 print:banner
                             fi
