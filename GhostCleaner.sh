@@ -24,7 +24,7 @@
 
 # Define variables:
 
-export fname="${0##*/}" status="true" version="1.0.0" banner="yes" COUNTER="1" DO="shell" i="" CLEAN=()
+export status="true" version="1.0.0" banner="yes" COUNTER="1" DO="shell" i="" CLEAN=()
 export reset="\033[0m" red="\033[0;31m" green="\033[0;32m" blue="\033[0;34m" purple="\033[0;35m" Bcyan="\033[1;36m" Bwhite="\033[1;37m"
 export LOGFILES=(
         "/var/log/messages" 
