@@ -16,16 +16,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# TO DO:
-#   - betiği ingilizce çıktı verecek şekilde ayarla.
-#   - interaktif kabuk için işleri fonksiyonlaştır.
-#   - renk ekle.
+# Contributors:
+#   - ByCh4n
+#   - lazypwny751
 
-# Bu betik UTF-8(16) karakterler barındırmaktadır.
+# Special tahnks to Cyrops.
 
-# Değişkenlerin Tanımlanması
+# Define variables:
 
 export fname="${0##*/}" status="true" version="1.0.0" banner="yes" COUNTER="1" DO="shell" i="" CLEAN=()
+export reset="\033[0m" red="\033[0;31m" green="\033[0;32m" blue="\033[0;34m" purple="\033[0;35m" Bcyan="\033[1;36m" Bwhite="\033[1;37m"
 export LOGFILES=(
         "/var/log/messages" 
         "/var/log/auth.log"
@@ -77,9 +77,11 @@ export req=(
     "touch"
 )
 
+# Check requirements:
+
 for chk in ${req[@]} ; do
     if ! command -v "${chk}" &> /dev/null ; then
-        echo -e "\t${0##*/}: command: '${chk}' not found.."
+        echo -e "\t${Bwhite}${0##*/}${reset}: command: '${chk}' ${red}not${reset} found.."
         export status="false"
     fi
 done
@@ -88,13 +90,13 @@ if [[ "${status}" = "false" ]] ; then
     exit 1
 fi
 
-# Fonksiyonların Tanımlanması
+# Define functions:
 
-print:banner() {
-    echo "        _______ __                 __   ______ __
+ghost:banner() {
+    echo -e "${green}        _______ __                 __   ______ __
         |     __|  |--.-----.-----.|  |_|      |  |.-----.---.-.-----.-----.----.
         |    |  |     |  _  |__ --||   _|   ---|  ||  -__|  _  |     |  -__|   _|
-        |_______|__|__|_____|_____||____|______|__||_____|___._|__|__|_____|__|
+        |_______|__|__|_____|_____||____|______|__||_____|___._|__|__|_____|__|${Bcyan}
 
                                 ⠀⠀⠀⠀⠀⢀⡠⠔⠂⠉⠉⠉⠉⠐⠦⡀⠀⠀⠀⠀⠀⠀
                                 ⠀⠀⠀⢀⠔⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡄⠀⠀⠀⠀⠀
@@ -108,10 +110,108 @@ print:banner() {
                                 ⠀⡄⠘⠒⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢣⠀⠀⠀⠀
                                 ⠀⢇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡀⠀⠀⠀
                                 ⠀⠘⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡤⠁⠀⠀⠀
-                                ⠀⠀⠘⠦⣀⠀⢀⡠⣆⣀⣠⠼⢀⡀⠴⠄⠚"
+                                ⠀⠀⠘⠦⣀⠀⢀⡠⣆⣀⣠⠼⢀⡀⠴⠄⠚${reset}
+"
 }
 
-# Argümanların Ayrıştırılması
+
+ghost:clear:log() {
+    local i=""
+    if [[ "${UID}" = 0 ]] ; then
+        if [[ "${banner}" = "yes" ]] ; then
+            ghost:banner
+        fi
+        read -p "This option will remove all of declared existing log files, but you may need to restart log services manually? [y/N]:> " quest
+        case "${quest}" in
+            [yY][eE][sS]|[eE][vV][eE][tT]|[eE]|[yY])
+                for i in ${LOGFILES[@]} ; do 
+                    if [[ -f "${i}" ]] ; then
+                        rm -rf "${i}" && {
+                        echo -e "${blue}${i}${reset} ${purple}removed${reset}."
+                        } || {
+                            echo -e "${blue}${i}${reset} could ${red}not${reset} be removed."
+                        }
+                    fi
+                done
+            ;;
+        esac
+    else
+        echo -e "Authorization ${red}failure${reset}, please run it as ${purple}root${reset} privalages."
+        return 1
+    fi
+}
+
+ghost:clear:history() {
+    if [[ -d "${HOME}" ]] ; then
+        if touch -c "${HOME}/"* &> /dev/null ; then
+            if [[ "${banner}" = "yes" ]] ; then
+                ghost:banner
+            fi
+            rm -rf "${HOME}/"*history && {
+                echo -e "${green}Successfully${reset} removed files and directories ending with '${Bcyan}history${reset}' under ${Bcyan}${HOME}${reset}."
+            } || {
+                echo -e "${red}Error${reset}(${red}s${reset}) occured while removing the file."
+                return 1
+            }
+        else
+            echo -e "Authorization ${red}failure${reset}, please run it as ${purple}root${reset} privalages."
+            return 1
+        fi
+    else
+        echo -e "${Bcyan}${USER}${reset} user ${red}haven't${reset} home directory."
+        return 1
+    fi
+}
+
+ghost:fetch:info() {
+    # Bellek kısmında, belleğin tamamı kullanılıyor olarak gözükebilir
+    # veya serbest bellek 0 değerinde olabilir bu durum sisteminizin çöktüğünü
+    # ya da betiğin yanlış çalıştığını göstermez, burada kullanılan bellek cached, active,
+    # inactive adresler ile birlikte hesaplanmaktadır, ayrıca swap hesaba dahil edilmez.
+
+    if [[ -f "/etc/os-release" ]] ; then
+        source "/etc/os-release"
+        local cpu="$(grep "model name" "/proc/cpuinfo" | cut -f 2 -d ":" | head -n 1)"
+        local xcpu="$(grep -w "cpu" /proc/stat | cut -d " " -f 3,5)"
+        local xcpu="${xcpu// /+}"
+        local ycpu="$(grep -w "cpu" /proc/stat | cut -d " " -f 3,5,6)"
+        local ycpu="${ycpu// /+}"
+        local ucpu="$(( (${xcpu} * 100) / ${xcpu// /+} ))"
+        local tmemory="$(( ($(grep "MemTotal" /proc/meminfo | tr -dc "0-9") / 1024) / 1024 ))"
+        local fmemory="$(( ($(grep "MemFree" "/proc/meminfo" | tr -dc "0-9") / 1024) / 1024 ))"
+        local umemory="$(( ${tmemory} - ${fmemory} ))"
+        local time="$(cut -d " " /proc/uptime -f 1)"
+        local hour="$(( (${time%.*} / 60) / 60 ))"
+        local minute="$(( ${time%.*} / 60 ))"
+        if [[ "${ucpu:0:2}" -le 40 ]] ; then
+            local ucpu="${green}${ucpu:0:2}${reset}"
+        elif [[ "${ucpu:0:2}" -le 70 ]] ; then
+            local ucpu="${blue}${ucpu:0:2}${reset}"
+        elif [[ "${ucpu:0:2}" -gt 70 ]] ; then
+            local ucpu="${red}${ucpu:0:2}${reset}"
+        fi
+        if [[ "${UID}" = 0 ]] ; then
+            local utype="${USER} is half god, be careful."
+        else
+            local utype="${USER} is a mortal user."
+        fi
+        if [[ "${banner}" = "yes" ]] ; then
+            ghost:banner
+        fi
+        echo -e "
+${Bwhite}Operating System${reset}\t: ${Bcyan}${NAME}${reset} ${green}${VERSION}${reset}
+${Bwhite}Up Time${reset}\t\t\t: ${blue}${hour}${Bwhite}h${reset} -> ${blue}${minute}${Bwhite}mn${reset} -> ${blue}${time%.*}${Bwhite}sec${reset}
+${Bwhite}Host Name${reset}\t\t: ${Bwhite}${HOSTNAME}${reset}
+${Bwhite}User Type${reset}\t\t: ${Bwhite}${utype}${reset}
+${Bwhite}CPU (Processor)${reset}\t\t:${blue}${cpu}${reset}
+${Bwhite}CPU Usage (Processor)${reset}\t: ${ucpu}${Bwhite}%${reset}
+${Bwhite}Memory Usage (Ram)${reset}\t: ${green}${tmemory}GB${reset} ${Bwhite}/${reset} ${purple}${umemory}GB${reset}
+${Bwhite}Free Memory (Ram)${reset}\t: ${blue}${fmemory}GB${reset}
+"
+    fi
+}
+
+# Parsing parameters:
 
 while [[ "${#}" -gt 0 ]] ; do
     case "${1}" in
@@ -153,167 +253,118 @@ while [[ "${#}" -gt 0 ]] ; do
     esac
 done
 
+# Execution the selected option:
+
 case "${DO}" in
     non-interactive)
         for i in ${CLEAN[@]} ; do
             case "${i}" in
                 log)
-                    if [[ "${UID}" = 0 ]] ; then
-                        if [[ "${banner}" = "yes" ]] ; then
-                            print:banner
-                        fi
-                        read -p "Bu işlem tüm tanımlı tüm log kayıtlarınızı silecek, ayrıca daha sonra log servislerini elle yeniden başlatmanız gerekebilir, devam etmek istiyor musunuz? [e/H]:> " quest
-                        case "${quest}" in
-                            [eE][vV][eE][tT]|[eE]|[yY])
-                                for i in ${LOGFILES[@]} ; do 
-                                    if [[ -f "${i}" ]] ; then
-                                        rm -rf "${i}" && {
-                                            echo "${i} kaldırıldı."
-                                        } || {
-                                            echo "${i} kaldırılamadı"
-                                        }
-                                    fi
-                                done
-                            ;;
-                        esac
-                    else
-                        echo "Bu işlemi faniler yapamaz!"
-                        export status="false"
-                    fi
+                    ghost:clear:log || export status="false"
                 ;;
                 hist)
-                    if [[ -d "${HOME}" ]] ; then
-                        if touch -c "${HOME}" &> /dev/null ; then
-                            if [[ "${banner}" = "yes" ]] ; then
-                                print:banner
-                            fi
-                            rm -rf "${HOME}/"*history && {
-                                echo "${HOME} dizini altındaki tüm 'history' ile biten dosyalar kaldırıldı."
-                            } || {
-                                echo "Kaldırma işlemi sırasında hata ile karşılaşıldı."
-                                export status="false"
-                            }
-                        else
-                            echo "Yetkilendirme hatası lütfen betiği fani olmayan bir kullanıcı yetkileri ile çalıştırın."
-                            export status="false"
-                        fi
-                    else
-                        echo "${USER} kullanıcısının ev dizini bulunmamaktadır."
-                        export status="false"
-                    fi
+                    ghost:clear:history || export status="false"
                 ;;
             esac
         done
     ;;
     fetch-info)
-        if [[ -f "/etc/os-release" ]] ; then
-            source "/etc/os-release"
-            export tab="$(printf '\t')"
-            export cpu="$(grep "model name" "/proc/cpuinfo" | cut -f 2 -d ":" | head -n 1)"
-            export xcpu="$(grep -w "cpu" /proc/stat | cut -d " " -f 3,5)"
-            export xcpu="${xcpu// /+}"
-            export ycpu="$(grep -w "cpu" /proc/stat | cut -d " " -f 3,5,6)"
-            export ycpu="${ycpu// /+}"
-            export ucpu="$(( (${xcpu} * 100) / ${xcpu// /+} ))"
-            export tmemory="$(( ($(grep "MemTotal" /proc/meminfo | tr -dc "0-9") / 1024) / 1024 ))"
-            export fmemory="$(( ($(grep "MemFree" "/proc/meminfo" | tr -dc "0-9") / 1024) / 1024 ))"
-            export umemory="$(( ${tmemory} - ${fmemory} ))"
-            export time="$(cut -d " " /proc/uptime -f 1)"
-            export hour="$(( (${time%.*} / 60) / 60 ))"
-            export minute="$(( ${time%.*} / 60 ))"
-            if [[ "${UID}" = 0 ]] ; then
-                export utype="${USER} yarı tanrı kullanıcıdır dikkatli olun."
-            else
-                export utype="${USER} fani kullanıcıdır."
-            fi
-            if [[ "${banner}" = "yes" ]] ; then
-                print:banner
-            fi
-            cat - <<INFO
-
-İşletim Sistemi:${tab} ${NAME} ${VERSION}
-Çalışma Zamanı:${tab}${tab} ${hour}h -> ${minute}mn -> ${time%.*}sec
-Makine Adı:${tab}${tab} ${HOSTNAME}
-Kullanıcı Türü:${tab}${tab} ${utype}
-CPU (İşlemci):${tab}${tab}${cpu}
-CPU Kullanımı (İşlemci): ${ucpu:0:2}%
-Bellek Kullanımı (Ram):${tab} ${tmemory}GB / ${umemory}GB
-Serbest Bellek (Ram):${tab} ${fmemory}GB
-INFO
-        fi
+        ghost:fetch:info
     ;;
     shell)
         export input="" subinput=""
         if [[ "${banner}" = "yes" ]] ; then
-            print:banner
+            ghost:banner
         fi
-        echo -e "\nMerhaba değerli ${USER} kullanıcısı,\n${0##*/} betiği ${version} sürümünün\netkileşimli kabuğuna hoş geldin, 'yardim' yazaraktan başlayabilirsin.\n"
+        echo -e "Welcome dear ${green}${USER}${reset}, here is interactive ${Bwhite}shell${reset} of the ${Bwhite}${0##*/}${reset}, you can start with type '${Bcyan}help${reset}'.\n"
         while true ; do
-            read -p "[${0##*/}.${version}]:> " input
+            read -p "[${0##*/}-${version}]:> " input
             case "${input}" in
                 banner)
-                    print:banner
+                    ghost:banner
                 ;;
-                yardim|help)
-                    echo "${0##*/} betiğinin yardım metni:"
+                log)
+                    ghost:clear:log
                 ;;
-                versiyon|version)
-                    echo "ByCh4n tarafından yapılan ${0##*/} sürüm ${version}."
+                history|gecmis)
+                    ghost:clear:history
+                ;;
+                info|bilgi)
+                    ghost:fetch:info
+                ;;
+                command|komut)
+                    echo -e "${Bwhite}banner${reset} \t${green}=>${reset}${Bwhite} [${reset} ${Bcyan}banner${reset} ${Bwhite}]${reset}
+${Bwhite}log${reset} \t${green}=>${reset}${Bwhite} [${reset} ${Bcyan}log${reset} ${Bwhite}]${reset}
+${Bwhite}history${reset} ${green}=>${reset}${Bwhite} [${reset} ${Bcyan}history${reset}, ${Bcyan}gecmis${reset} ${Bwhite}]${reset}
+${Bwhite}info${reset} \t${green}=>${reset}${Bwhite} [${reset} ${Bcyan}info${reset}, ${Bcyan}bilgi${reset} ${Bwhite}]${reset}
+${Bwhite}command${reset} ${green}=>${reset}${Bwhite} [${reset} ${Bcyan}command${reset}, ${Bcyan}komut${reset} ${Bwhite}]${reset}
+${Bwhite}help${reset} \t${green}=>${reset}${Bwhite} [${reset} ${Bcyan}help${reset}, ${Bcyan}yardim${reset} ${Bwhite}]${reset}
+${Bwhite}version${reset} ${green}=>${reset}${Bwhite} [${reset} ${Bcyan}version${reset}, ${Bcyan}versiyon${reset} ${Bwhite}]${reset}
+${Bwhite}exit${reset} \t${green}=>${reset}${Bwhite} [${reset} ${Bcyan}exit${reset}, ${Bcyan}quit${reset}, ${Bcyan}cikis${reset} ${Bwhite}]${reset}"
+                ;;
+                help|yardim)
+                    echo -e "${Bwhite}banner${reset}\tit prints just the ${green}banner${reset}.
+${Bwhite}log${reset}\t${red}removes${reset} if exist that declared ${Bcyan}log${reset} files in array.
+${Bwhite}history${reset}\t${red}removes${reset} all files and directories ending with '${Bcyan}history${reset}' in your ${green}home${reset} directory.
+${Bwhite}info${reset}\t${green}fetch${reset} the system information about your ${purple}computer${reset}.
+${Bwhite}command${reset}\tshows ${Bcyan}alternative${reset} ${green}names${reset} of commands in the interactive ${Bwhite}shell${reset}.
+${Bwhite}help${reset}\tshows this helper text.
+${Bwhite}version${reset}\tshows current version of ${Bwhite}${0##*/}${reset}.
+${Bwhite}exit${reset}\t${red}exit${reset} the interactive ${Bwhite}shell${reset}."
+                ;;
+                version|versiyon)
+                    echo -e "Developed by ${green}ByCh4n${reset} ${Bwhite}${0##*/}${reset}, version ${Bcyan}${version}${reset}."
                 ;;
                 exit|quit|cikis)
                     exit 0
                 ;;
                 *)
-                    echo "Bu sürümde interaktif kabuk desteklenmemektedir."
-                    break
+                    echo -e "${Bwhite}${0##*/}${reset}: ${red}case${reset}: '${Bcyan}${input}${reset}' pattern not found."
                 ;;
             esac
         done
     ;;
     print-banner)
-        print:banner
+        ghost:banner
     ;;
     help)
-        export tab="$(printf '\t')"
-        cat - <<HELP
-${0##*/} - ${version}, 8 adet seçenek mevcut:
-${tab}--clean-logs | -cl
-${tab}${tab}bu argüman ile sistemde var olan logları
-${tab}${tab}kaldırarak aladan kazanma ve gizlilik sağlanması planlanmaktadır
-${tab}${tab}lakin loglar kapatıldıktan sonra aktif log süreçlerinin de yeniden başlatılması gerekir.
+        echo -e "${green}${0##*/}${reset} - ${blue}${version}${reset}, there is ${Bwhite}8${reset} options:
+\t${Bwhite}--clean-logs${reset} | ${Bwhite}-cl${reset}
+\t\tit removes existing logs from array, but maybe you need to restart to log services
+\t\tafter this option, it can be break any service.
 
-${tab}--clean-history | -cl
-${tab}${tab}geçerli kullanıcının home dizininde ki kabuğun komut
-${tab}${tab}kaydını temizler bu gizlilik açısından önemlidir.
+\t${Bwhite}--clean-history${reset} | ${Bwhite}-cl${reset}
+\t\tit removes any files and directories ending with 'history' in your home directory. 
 
-${tab}--fetch-info | -fi
-${tab}${tab}sisteminizin aktif olarak ne kadar bellek tükettiği hangi dağıtımı
-${tab}${tab}kullandığınız, hangi paket yöneticisini kullandığınız ve ne kadar paketinizin olduğu vb..
+\t${Bwhite}--fetch-info${reset} | ${Bwhite}-fi${reset}
+\t\tfetch the system information and print to the screen, it shows \"OS\", \"UPTIME\", \"HOSTNAME\"
+\t\t\"USER TYPE\", \"CPU MODEL\", \"CPU USAGE\", \"RAM USAGE (with cached, inactive, active)\", \"FREE RAM\"
 
-${tab}--shell | -sh
-${tab}${tab}burada yer alan argümanların özelliklerini basit bir shell'de elle uygulayabileceğiniz bir ortam.
+\t${Bwhite}--shell${reset} | ${Bwhite}-sh${reset}
+\t\tthere is a little shell like 'sh' using 'read. There you can use the options as command.
 
-${tab}--banner | -bn
-${tab}${tab}${0##*/}'in banner'ını ekrana yazdırır.
+\t${Bwhite}--banner${reset} | ${Bwhite}-bn${reset}
+\t\tjust print the banner.
 
-${tab}--no-banner | -nb
-${tab}${tab}herhangi bir işlemde ön tanımlı olarak ekrana banner yazdırmaz.
+\t${Bwhite}--no-banner${reset} | ${Bwhite}-nb${reset}
+\t\tset default 'do not print banner' for any option.
 
-${tab}--help | -h
-${tab}${tab}bu yardımcı metni gösterir.
+\t${Bwhite}--help${reset} | ${Bwhite}-h${reset}
+\t\tshows this helper text.
 
-${tab}--version | -v
-${tab}${tab}sscript'in geçerli sürümünü gösterir.
-HELP
+\t${Bwhite}--version${reset} | ${Bwhite}-v${reset}
+\t\tshows the current version of the project."
     ;;
     version)
         echo "${version}"
     ;;
     *)
-        echo "Buralarda '${DO}' adında yapılacak bir iş bilmiyorum."
+        echo -e "${Bwhite}${0##*/}${reset}: there is ${red}no${reset} job like called by '${Bcyan}${DO}${reset}'."
         export status="false"
     ;;
 esac
+
+# Exit cleanly:
 
 if [[ "${status}" = "false" ]] ; then
     exit 1
