@@ -338,7 +338,7 @@ ${Bwhite}exit${reset}\t${red}exit${reset} the interactive ${Bwhite}shell${reset}
 
 \t${Bwhite}--fetch-info${reset} | ${Bwhite}-fi${reset}
 \t\tfetch the system information and print to the screen, it shows \"OS\", \"UPTIME\", \"HOSTNAME\"
-\t\t\"USER TYPE\", \"CPU MODEL\", \"CPU USAGE\", \"RAM USAGE (with cached, inactive, active)\", \"FREE RAM\"
+\t\t\"USER TYPE\", \"CPU MODEL\", \"CPU USAGE\", \"RAM USAGE (with cached, inactive, active)\", \"FREE RAM\".
 
 \t${Bwhite}--shell${reset} | ${Bwhite}-sh${reset}
 \t\tthere is a little shell like 'sh' using 'read. There you can use the options as command.
