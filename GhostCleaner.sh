@@ -79,7 +79,7 @@ export req=(
 
 # Check requirements:
 
-for chk in ${req[@]} ; do
+for chk in "${req[@]}" ; do
     if ! command -v "${chk}" &> /dev/null ; then
         echo -e "\t${Bwhite}${0##*/}${reset}: command: '${chk}' ${red}not${reset} found.."
         export status="false"
@@ -124,7 +124,7 @@ ghost:clear:log() {
         read -p "This option will remove all of declared existing log files, but you may need to restart log services manually? [y/N]:> " quest
         case "${quest}" in
             [yY][eE][sS]|[eE][vV][eE][tT]|[eE]|[yY])
-                for i in ${LOGFILES[@]} ; do 
+                for i in "${LOGFILES[@]}" ; do
                     if [[ -f "${i}" ]] ; then
                         rm -rf "${i}" && {
                         echo -e "${blue}${i}${reset} ${purple}removed${reset}."
@@ -263,7 +263,7 @@ done
 
 case "${DO}" in
     non-interactive)
-        for i in ${CLEAN[@]} ; do
+        for i in "${CLEAN[@]}" ; do
             case "${i}" in
                 log)
                     ghost:clear:log || export status="false"
