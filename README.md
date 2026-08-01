@@ -1,48 +1,87 @@
-# GhostCleaner - 1.0.0
-
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/54551308/187172068-3cb39b99-e362-4f1c-b514-fa846986874d.png" alt="Ghost Cleaners Logo"/>
+  <img src="https://user-images.githubusercontent.com/54551308/187172068-3cb39b99-e362-4f1c-b514-fa846986874d.png" alt="GhostCleaner logo" />
 </p>
 
-Simple automated log&history cleaner and fetch information like neofetch, this script compatible with all distro which have bash (bourne again shell).
+<h1 align="center">GhostCleaner</h1>
 
-# Installation:
+<p align="center">
+  <img src="https://github.com/ByCh4n/GhostCleaner/actions/workflows/shellcheck.yml/badge.svg" alt="ShellCheck" />
+  <img src="https://img.shields.io/github/license/ByCh4n/GhostCleaner" alt="License" />
+  <img src="https://img.shields.io/github/stars/ByCh4n/GhostCleaner?style=social" alt="Stars" />
+</p>
+
+A simple, portable log & history cleaner that also fetches system information
+(neofetch-style). It is compatible with any distribution that ships `bash`.
+
+## Features
+
+- Cleans a configurable list of common system log files
+- Removes `*history` files from the user's home directory
+- Fetches system info: OS, uptime, hostname, CPU model & usage, RAM usage
+- Interactive shell mode plus one-shot command-line flags
+- Portable — runs directly from the cloned repository, no install required
+
+## Requirements
+
+- `bash`
+- Root privileges for log cleaning (`sudo`)
+- Core utilities: `rm`, `cut`, `grep`, `head`, `touch`
+
+## Installation
+
 ```bash
 git clone https://github.com/ByCh4n/GhostCleaner.git
 cd GhostCleaner
 sudo make install
 ```
-### Deep note:
-also you can use the script directly after cloning the repository like **bash GhostCleaner.sh --help**, it's portable script.
 
-# Usage:
+> You can also run it directly after cloning — `bash GhostCleaner.sh --help` —
+> it is a fully portable script.
 
-- **ghostcleaner --clean-logs** : it removes existing logs from array, but maybe you need to restart to log services after this option, it can be break any service.
+## Usage
 
-- **ghostcleaner --clean-history** : it removes any files and directories ending with 'history' in your home directory.
+| Flag | Description |
+|------|-------------|
+| `--clean-logs` | Remove the log files defined in the list (you may need to restart logging services afterwards) |
+| `--clean-history` | Remove files/directories ending with `history` in your home directory |
+| `--fetch-info` | Print system information |
+| `--shell` | Start the interactive shell |
+| `--banner` | Print the banner |
+| `--no-banner` | Disable the banner for any option |
+| `--help` | Show the help text |
+| `--version` | Show the current version |
 
-- **ghostcleaner --fetch-info** : fetch the system information and print to the screen, it shows "OS", "UPTIME", "HOSTNAME" "USER TYPE", "CPU MODEL", "CPU USAGE", "RAM USAGE (with cached, inactive, active)", "FREE RAM".
+## Screenshots
 
-- **ghostcleaner --shell** : there is a little shell like 'sh' using 'read. There you can use the options as command.
+**Interactive shell**
+![Interactive shell](https://user-images.githubusercontent.com/54551308/187173980-3e9d2ecb-c858-451c-90d0-ed9aba095a0a.png)
 
-- **ghostcleaner --banner** : just print the banner.
+**Help output**
+![Help](https://user-images.githubusercontent.com/54551308/187174463-c5061a86-74d4-423d-9d35-cafec225c88d.png)
+![Help](https://user-images.githubusercontent.com/54551308/187174608-c13e3c50-c4e7-426b-bd28-743f7e380ee9.png)
 
-- **ghostcleaner --no-banner** : set default 'do not print banner' for any option.
+## Disclaimer
 
-- **ghostcleaner --help** : shows this helper text.
+GhostCleaner deletes system logs and shell history. It is intended for
+**authorized system maintenance and educational use only** — run it only on
+systems you own or administer. The author accepts no liability for data loss or
+misuse.
 
-- **ghostcleaner --version** : shows the current version of the project.
+## Contributing
 
-# ScreenShots from the tool:
-- ## Interactive shell of Ghost Cleaner:
-![image](https://user-images.githubusercontent.com/54551308/187173980-3e9d2ecb-c858-451c-90d0-ed9aba095a0a.png)
+Pull requests are welcome. For major changes, please open an issue first to
+discuss what you would like to change.
 
-- ## Help option of Ghost Cleaner:
-![image](https://user-images.githubusercontent.com/54551308/187174463-c5061a86-74d4-423d-9d35-cafec225c88d.png)
-![image](https://user-images.githubusercontent.com/54551308/187174608-c13e3c50-c4e7-426b-bd28-743f7e380ee9.png)
+## Author
 
-## Contributing:
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+**Hüseyin Altıntaş — ByCh4n**
 
-## License:
-[GPL3](https://choosealicense.com/licenses/gpl-3.0/)
+- GitHub: [@ByCh4n](https://github.com/ByCh4n)
+- LinkedIn: [huseyinaltns](https://www.linkedin.com/in/huseyinaltns/)
+- X: [@huseyinaltns](https://x.com/huseyinaltns)
+
+Special thanks to [@lazypwny751](https://github.com/lazypwny751).
+
+## License
+
+Licensed under the [GPL-3.0](LICENSE) license.
