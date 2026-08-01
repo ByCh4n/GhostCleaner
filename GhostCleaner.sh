@@ -172,23 +172,29 @@ ghost:fetch:info() {
     if [[ -f "/etc/os-release" ]] ; then
         source "/etc/os-release"
         local cpu="$(grep "model name" "/proc/cpuinfo" | cut -f 2 -d ":" | head -n 1)"
-        local xcpu="$(grep -w "cpu" /proc/stat | cut -d " " -f 3,5)"
-        local xcpu="${xcpu// /+}"
-        local ycpu="$(grep -w "cpu" /proc/stat | cut -d " " -f 3,5,6)"
-        local ycpu="${ycpu// /+}"
-        local ucpu="$(( (${xcpu} * 100) / ${xcpu// /+} ))"
+        # CPU kullanımı: /proc/stat'tan 1 sn arayla iki örnek alıp aradaki farktan hesapla.
+        local a b c idle1 total1 idle2 total2 dtotal didle
+        read -r _ a b c idle1 _ <<< "$(grep "^cpu " /proc/stat)"
+        total1=$(( a + b + c + idle1 ))
+        sleep 1
+        read -r _ a b c idle2 _ <<< "$(grep "^cpu " /proc/stat)"
+        total2=$(( a + b + c + idle2 ))
+        dtotal=$(( total2 - total1 ))
+        didle=$(( idle2 - idle1 ))
+        local ucpu=0
+        [[ "${dtotal}" -gt 0 ]] && ucpu=$(( (100 * (dtotal - didle)) / dtotal ))
         local tmemory="$(( ($(grep "MemTotal" /proc/meminfo | tr -dc "0-9") / 1024) / 1024 ))"
         local fmemory="$(( ($(grep "MemFree" "/proc/meminfo" | tr -dc "0-9") / 1024) / 1024 ))"
         local umemory="$(( ${tmemory} - ${fmemory} ))"
         local time="$(cut -d " " /proc/uptime -f 1)"
         local hour="$(( (${time%.*} / 60) / 60 ))"
         local minute="$(( ${time%.*} / 60 ))"
-        if [[ "${ucpu:0:2}" -le 40 ]] ; then
-            local ucpu="${green}${ucpu:0:2}${reset}"
-        elif [[ "${ucpu:0:2}" -le 70 ]] ; then
-            local ucpu="${blue}${ucpu:0:2}${reset}"
-        elif [[ "${ucpu:0:2}" -gt 70 ]] ; then
-            local ucpu="${red}${ucpu:0:2}${reset}"
+        if [[ "${ucpu}" -le 40 ]] ; then
+            local ucpu="${green}${ucpu}${reset}"
+        elif [[ "${ucpu}" -le 70 ]] ; then
+            local ucpu="${blue}${ucpu}${reset}"
+        else
+            local ucpu="${red}${ucpu}${reset}"
         fi
         if [[ "${UID}" = 0 ]] ; then
             local utype="${USER} is half god, be careful."
